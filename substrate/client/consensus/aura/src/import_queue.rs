@@ -19,7 +19,9 @@
 //! Module implementing the logic for verifying and importing AuRa blocks.
 
 use crate::{
-	authorities, standalone::SealVerificationError, AuthorityId, CompatibilityMode, Error,
+	authorities,
+	standalone::{CreateInherentDataProvidersNowOrAtSlot, SealVerificationError},
+	AuthorityId, CompatibilityMode, Error,
 	LOG_TARGET,
 };
 use codec::Codec;
@@ -36,12 +38,12 @@ use sp_api::{ApiExt, ProvideRuntimeApi};
 use sp_block_builder::BlockBuilder as BlockBuilderApi;
 use sp_blockchain::HeaderBackend;
 use sp_consensus::Error as ConsensusError;
-use sp_consensus_aura::{inherents::AuraInherentData, AuraApi};
+use sp_consensus_aura::AuraApi;
 use sp_consensus_slots::Slot;
 use sp_core::crypto::Pair;
-use sp_inherents::{CreateInherentDataProviders, InherentDataProvider as _};
+use sp_inherents::{CreateInherentDataProviders, InherentData, InherentDataProvider as _, InherentDataProvider};
 use sp_runtime::{
-	traits::{Block as BlockT, Header, NumberFor},
+	traits::{Block as BlockT, Block, Header, NumberFor},
 	DigestItem,
 };
 use std::{fmt::Debug, marker::PhantomData, sync::Arc};
@@ -170,8 +172,9 @@ where
 	P: Pair,
 	P::Public: Codec + Debug,
 	P::Signature: Codec,
-	CIDP: CreateInherentDataProviders<B, ()> + Send + Sync,
-	CIDP::InherentDataProviders: InherentDataProviderExt + Send + Sync,
+	CIDP: CreateInherentDataProvidersNowOrAtSlot<B> + Send + Sync,
+	<CIDP as CreateInherentDataProviders<B, ()>>::InherentDataProviders:
+	InherentDataProviderExt + Send + Sync,
 {
 	async fn verify(
 		&mut self,
@@ -199,18 +202,13 @@ where
 		)
 		.map_err(|e| format!("Could not fetch authorities at {:?}: {}", parent_hash, e))?;
 
-		let create_inherent_data_providers = self
-			.create_inherent_data_providers
-			.create_inherent_data_providers(parent_hash, ())
-			.await
-			.map_err(|e| Error::<B>::Client(sp_blockchain::Error::Application(e)))?;
+		let inherent_data_provider =
+			create_inherent_data_provider(&self.create_inherent_data_providers, parent_hash, ())
+				.await?;
 
-		let mut inherent_data = create_inherent_data_providers
-			.create_inherent_data()
-			.await
-			.map_err(Error::<B>::Inherent)?;
+		let mut inherent_data = create_inherent_data::<B>(&inherent_data_provider).await?;
 
-		let slot_now = create_inherent_data_providers.slot();
+		let slot_now = inherent_data_provider.slot();
 
 		// we add one to allow for some small drift.
 		// FIXME #1019 in the future, alter this queue to allow deferring of
@@ -232,7 +230,13 @@ where
 				if let Some(inner_body) = block.body.take() {
 					let new_block = B::new(pre_header.clone(), inner_body);
 
-					inherent_data.aura_replace_inherent_data(slot);
+					extend_inherent_data(
+						&self.create_inherent_data_providers,
+						parent_hash,
+						slot,
+						&mut inherent_data,
+					)
+						.await?;
 
 					// skip the inherents verification if the runtime API is old or not expected to
 					// exist.
@@ -246,7 +250,7 @@ where
 							new_block.clone(),
 							parent_hash,
 							inherent_data,
-							create_inherent_data_providers,
+							inherent_data_provider,
 						)
 						.await
 						.map_err(|e| e.to_string())?;
@@ -365,8 +369,8 @@ where
 	P::Public: Codec + Debug,
 	P::Signature: Codec,
 	S: sp_core::traits::SpawnEssentialNamed,
-	CIDP: CreateInherentDataProviders<Block, ()> + Sync + Send + 'static,
-	CIDP::InherentDataProviders: InherentDataProviderExt + Send + Sync,
+	CIDP: CreateInherentDataProvidersNowOrAtSlot<Block> + Sync + Send + 'static,
+	<CIDP as CreateInherentDataProviders<Block, ()>>::InherentDataProviders: InherentDataProviderExt + Send + Sync,
 {
 	let verifier = build_verifier::<P, _, _, _>(BuildVerifierParams {
 		client,
@@ -412,4 +416,36 @@ pub fn build_verifier<P, C, CIDP, N>(
 		telemetry,
 		compatibility_mode,
 	)
+}
+
+async fn extend_inherent_data<B: BlockT, ExtraArg>(
+	cidp: &impl CreateInherentDataProviders<B, ExtraArg>,
+	hash: B::Hash,
+	extra_arg: ExtraArg,
+	inherent_data: &mut InherentData,
+) -> Result<(), String> {
+	Ok(create_inherent_data_provider(cidp, hash, extra_arg)
+		.await?
+		.provide_inherent_data(inherent_data)
+		.await
+		.map_err(Error::<B>::Inherent)?)
+}
+
+async fn create_inherent_data_provider<CIDP, B: BlockT, ExtraArg>(
+	cidp: &CIDP,
+	hash: B::Hash,
+	extra_arg: ExtraArg,
+) -> Result<CIDP::InherentDataProviders, String>
+	where
+		CIDP: CreateInherentDataProviders<B, ExtraArg>,
+{
+	cidp.create_inherent_data_providers(hash, extra_arg)
+		.await
+		.map_err(|e| Error::<B>::Client(sp_blockchain::Error::Application(e)).into())
+}
+
+async fn create_inherent_data<B: BlockT>(
+	provider: &impl InherentDataProvider,
+) -> Result<InherentData, String> {
+	Ok(provider.create_inherent_data().await.map_err(Error::<B>::Inherent)?)
 }
