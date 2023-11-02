@@ -9983,6 +9983,7 @@ dependencies = [
  "sp-keyring",
  "sp-runtime",
  "sp-session",
+ "sp-sidechains-session",
  "sp-staking",
  "sp-std 14.0.0",
 ]
@@ -18787,6 +18788,13 @@ dependencies = [
  "sp-runtime",
  "sp-staking",
  "sp-std 14.0.0",
+]
+
+[[package]]
+name = "sp-sidechains-session"
+version = "4.0.0-dev"
+dependencies = [
+ "sp-staking",
 ]
 
 [[package]]

@@ -34,6 +34,7 @@ pub enum Keyring {
 	Dave,
 	Eve,
 	Ferdie,
+	Greg,
 	AliceStash,
 	BobStash,
 	CharlieStash,
@@ -119,6 +120,7 @@ impl From<Keyring> for &'static str {
 			Keyring::Dave => "Dave",
 			Keyring::Eve => "Eve",
 			Keyring::Ferdie => "Ferdie",
+			Keyring::Greg => "Greg",
 			Keyring::AliceStash => "Alice//stash",
 			Keyring::BobStash => "Bob//stash",
 			Keyring::CharlieStash => "Charlie//stash",
@@ -157,6 +159,7 @@ impl std::str::FromStr for Keyring {
 			"dave" => Ok(Keyring::Dave),
 			"eve" => Ok(Keyring::Eve),
 			"ferdie" => Ok(Keyring::Ferdie),
+			"greg" => Ok(Keyring::Greg),
 			"one" => Ok(Keyring::One),
 			"two" => Ok(Keyring::Two),
 			_ => Err(ParseKeyringError),
@@ -197,6 +200,8 @@ impl From<Keyring> for [u8; 32] {
 				hex2array!("e659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e"),
 			Keyring::Ferdie =>
 				hex2array!("1cbd2d43530a44705ad088af313e18f80b53ef16b36177cd4b77b846f2a5f07c"),
+			Keyring::Greg =>
+				hex2array!("2c4ed1038f6e4131c21b6b89885ed232c5b81bae09009376e9079cc8aa518a1c"),
 			Keyring::AliceStash =>
 				hex2array!("be5ddb1579b72e84524fc29e78609e3caf42e85aa118ebfe0b0ad404b5bdd25f"),
 			Keyring::BobStash =>
