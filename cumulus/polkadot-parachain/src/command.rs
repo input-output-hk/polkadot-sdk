@@ -446,7 +446,7 @@ macro_rules! construct_async_run {
 		let runner = $cli.create_runner($cmd)?;
 		match runner.config().chain_spec.runtime()? {
 			Runtime::AssetHubPolkadot => {
-				runner.async_run(|$config| {
+				runner.async_run(|$config| async move {
 					let $components = new_partial::<AssetHubPolkadotRuntimeApi, _>(
 						&$config,
 						crate::service::aura_build_import_queue::<_, AssetHubPolkadotAuraId>,
@@ -463,7 +463,7 @@ macro_rules! construct_async_run {
 			Runtime::CollectivesWestend |
 			Runtime::Coretime(_) |
 			Runtime::People(_) => {
-				runner.async_run(|$config| {
+				runner.async_run(|$config| async move {
 					let $components = new_partial::<RuntimeApi, _>(
 						&$config,
 						crate::service::aura_build_import_queue::<_, AuraId>,
@@ -476,7 +476,7 @@ macro_rules! construct_async_run {
 			Runtime::Seedling |
 			Runtime::GluttonWestend |
 			Runtime::Glutton => {
-				runner.async_run(|$config| {
+				runner.async_run(|$config| async move {
 					let $components = new_partial::<RuntimeApi, _>(
 						&$config,
 						crate::service::shell_build_import_queue,
@@ -486,7 +486,7 @@ macro_rules! construct_async_run {
 				})
 			}
 			Runtime::ContractsRococo => {
-				runner.async_run(|$config| {
+				runner.async_run(|$config| async move {
 					let $components = new_partial::<RuntimeApi, _>(
 						&$config,
 						crate::service::contracts_rococo_build_import_queue,
@@ -496,7 +496,7 @@ macro_rules! construct_async_run {
 				})
 			},
 			Runtime::Penpal(_) | Runtime::Default => {
-				runner.async_run(|$config| {
+				runner.async_run(|$config| async move {
 					let $components = new_partial::<
 						RuntimeApi,
 						_,

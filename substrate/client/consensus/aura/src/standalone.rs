@@ -38,7 +38,6 @@ use sp_runtime::{
 };
 
 pub use sc_consensus_slots::check_equivocation;
-
 use super::{
 	AuraApi, AuthorityId, CompatibilityMode, CompatibleDigestItem, SlotDuration, LOG_TARGET,
 };
@@ -318,6 +317,13 @@ where
 			Err(SealVerificationError::BadSignature)
 		}
 	}
+}
+
+/// Provides the current slot for Aura verification purpose.
+pub trait CurrentSlotProvider
+{
+	/// Returns the current slot, according to wall-time and slot duration configuration.
+	fn slot(&self) -> Slot;
 }
 
 #[cfg(test)]
