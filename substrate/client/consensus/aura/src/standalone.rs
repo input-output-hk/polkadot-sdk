@@ -31,6 +31,7 @@ use sp_blockchain::Result as CResult;
 use sp_consensus::Error as ConsensusError;
 use sp_consensus_slots::Slot;
 use sp_core::crypto::{ByteArray, Pair};
+use sp_inherents::CreateInherentDataProviders;
 use sp_keystore::KeystorePtr;
 use sp_runtime::{
 	traits::{Block as BlockT, Header, NumberFor, Zero},
@@ -319,6 +320,10 @@ where
 		}
 	}
 }
+
+/// When verifying a block, we need to create some of the inherents with current slot and some with
+/// the slot of the block which is being verified. This trait makes it more verbose.
+pub trait CreateInherentDataProvidersNowOrAtSlot<Block: BlockT>: CreateInherentDataProviders<Block, ()> + CreateInherentDataProviders<Block, Slot> {}
 
 #[cfg(test)]
 mod tests {

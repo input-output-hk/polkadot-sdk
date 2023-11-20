@@ -35,6 +35,7 @@ pub enum Keyring {
 	Dave,
 	Eve,
 	Ferdie,
+	Greg,
 	One,
 	Two,
 }
@@ -114,6 +115,7 @@ impl From<Keyring> for &'static str {
 			Keyring::Dave => "Dave",
 			Keyring::Eve => "Eve",
 			Keyring::Ferdie => "Ferdie",
+			Keyring::Greg => "Greg",
 			Keyring::One => "One",
 			Keyring::Two => "Two",
 		}
@@ -145,6 +147,7 @@ impl std::str::FromStr for Keyring {
 			"charlie" => Ok(Keyring::Charlie),
 			"dave" => Ok(Keyring::Dave),
 			"eve" => Ok(Keyring::Eve),
+			"greg" => Ok(Keyring::Greg),
 			"ferdie" => Ok(Keyring::Ferdie),
 			"one" => Ok(Keyring::One),
 			"two" => Ok(Keyring::Two),
