@@ -573,6 +573,7 @@ mod tests {
 		runtime::{Header, H256},
 		TestClient,
 	};
+	use crate::standalone::CreateInherentDataProvidersNowOrAtSlot;
 
 	const SLOT_DURATION_MS: u64 = 1000;
 
@@ -614,24 +615,47 @@ mod tests {
 		}
 	}
 
-	type AuraVerifier = import_queue::AuraVerifier<
-		PeersFullClient,
-		AuthorityPair,
-		Box<
-			dyn CreateInherentDataProviders<
-				TestBlock,
-				(),
-				InherentDataProviders = (InherentDataProvider,),
-			>,
-		>,
-		u64,
-	>;
+	type AuraVerifier = import_queue::AuraVerifier<PeersFullClient, AuthorityPair, TestCIDP, u64>;
 	type AuraPeer = Peer<(), PeersClient>;
 
 	#[derive(Default)]
 	pub struct AuraTestNet {
 		peers: Vec<AuraPeer>,
 	}
+
+	pub struct TestCIDP;
+
+	#[async_trait::async_trait]
+	impl CreateInherentDataProviders<Block, ()> for TestCIDP {
+		type InherentDataProviders = (InherentDataProvider,);
+
+		async fn create_inherent_data_providers(
+			&self,
+			_parent: <Block as BlockT>::Hash,
+			_extra_args: (),
+		) -> Result<Self::InherentDataProviders, Box<dyn std::error::Error + Send + Sync>> {
+			let slot = InherentDataProvider::from_timestamp_and_slot_duration(
+				Timestamp::current(),
+				SlotDuration::from_millis(SLOT_DURATION_MS),
+			);
+			Ok((slot,))
+		}
+	}
+
+	#[async_trait::async_trait]
+	impl CreateInherentDataProviders<Block, Slot> for TestCIDP {
+		type InherentDataProviders = ();
+
+		async fn create_inherent_data_providers(
+			&self,
+			_parent: <Block as BlockT>::Hash,
+			_extra_args: Slot,
+		) -> Result<Self::InherentDataProviders, Box<dyn std::error::Error + Send + Sync>> {
+			Ok(())
+		}
+	}
+
+	impl CreateInherentDataProvidersNowOrAtSlot<TestBlock> for TestCIDP {}
 
 	impl TestNetFactory for AuraTestNet {
 		type Verifier = AuraVerifier;
@@ -645,13 +669,7 @@ mod tests {
 			assert_eq!(slot_duration.as_millis() as u64, SLOT_DURATION_MS);
 			import_queue::AuraVerifier::new(
 				client,
-				Box::new(|_, _| async {
-					let slot = InherentDataProvider::from_timestamp_and_slot_duration(
-						Timestamp::current(),
-						SlotDuration::from_millis(SLOT_DURATION_MS),
-					);
-					Ok((slot,))
-				}),
+				TestCIDP,
 				CheckForEquivocation::Yes,
 				None,
 				CompatibilityMode::None,
