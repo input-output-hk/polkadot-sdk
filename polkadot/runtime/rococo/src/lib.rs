@@ -430,6 +430,12 @@ impl pallet_session::Config for Runtime {
 	type WeightInfo = weights::pallet_session::WeightInfo<Runtime>;
 }
 
+impl sp_sidechains_session::CurrentSessionIndex for Runtime {
+	fn current_session_index() -> sp_staking::SessionIndex {
+		Session::current_index()
+	}
+}
+
 pub struct FullIdentificationOf;
 impl sp_runtime::traits::Convert<AccountId, Option<()>> for FullIdentificationOf {
 	fn convert(_: AccountId) -> Option<()> {
