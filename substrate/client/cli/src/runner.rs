@@ -40,8 +40,8 @@ pub fn build_runtime() -> std::result::Result<tokio::runtime::Runtime, std::io::
 
 /// A Substrate CLI runtime that can be used to run a node or a command
 pub struct Runner<C: SubstrateCli> {
-	config: Configuration,
-	tokio_runtime: tokio::runtime::Runtime,
+	pub config: Configuration,
+	pub tokio_runtime: tokio::runtime::Runtime,
 	signals: Signals,
 	phantom: PhantomData<C>,
 }
