@@ -572,7 +572,7 @@ pub enum ApiError {
 #[cfg(feature = "jsonrpsee")]
 impl From<ApiError> for jsonrpsee_types::ErrorObjectOwned {
 	fn from(e: ApiError) -> Self {
-		jsonrpsee_types::ErrorObjectOwned::owned(-500, format!("Runtime Api Error: {e}"))
+		jsonrpsee_types::ErrorObjectOwned::owned(-500, format!("Runtime Api Error: {e}"), None::<()>)
 	}
 }
 
