@@ -58,7 +58,7 @@ std = [
 	"sp-trie/std",
 	"sp-version/std",
 	"thiserror",
-	"jsonrpsee?/std"
+	"jsonrpsee-types?/std"
 ]
 jsonrpsee = [
     "jsonrpsee-types"
