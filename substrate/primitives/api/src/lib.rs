@@ -569,6 +569,13 @@ pub enum ApiError {
 	UsingSameInstanceForDifferentBlocks,
 }
 
+#[cfg(feature = "jsonrpsee")]
+impl From<ApiError> for jsonrpsee_types::ErrorObjectOwned {
+	fn from(e: ApiError) -> Self {
+		jsonrpsee_types::ErrorObjectOwned::owned(-500, format!("Runtime Api Error: {e}"))
+	}
+}
+
 /// Extends the runtime api implementation with some common functionality.
 #[cfg(feature = "std")]
 pub trait ApiExt<Block: BlockT> {

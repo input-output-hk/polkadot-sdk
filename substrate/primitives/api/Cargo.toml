@@ -33,6 +33,7 @@ scale-info = { version = "2.10.0", default-features = false, features = [
 ] }
 sp-metadata-ir = { path = "../metadata-ir", default-features = false, optional = true }
 log = { version = "0.4.17", default-features = false }
+jsonrpsee-types = { version = "0.20.3", optional = true }
 
 [dev-dependencies]
 sp-test-primitives = { path = "../test-primitives" }
@@ -57,6 +58,10 @@ std = [
 	"sp-trie/std",
 	"sp-version/std",
 	"thiserror",
+	"jsonrpsee?/std"
+]
+jsonrpsee = [
+    "jsonrpsee-types"
 ]
 # Special feature to disable logging completely.
 #
