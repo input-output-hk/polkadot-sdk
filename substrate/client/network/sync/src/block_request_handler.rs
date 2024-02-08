@@ -24,7 +24,6 @@ use crate::{
 		BlockResponse as BlockResponseSchema, BlockResponse, Direction,
 	},
 	service::network::NetworkServiceHandle,
-	MAX_BLOCKS_IN_RESPONSE,
 };
 
 use codec::{Decode, DecodeAll, Encode};
@@ -53,6 +52,9 @@ use std::{
 	sync::Arc,
 	time::Duration,
 };
+
+/// Maximum blocks per response.
+pub(crate) const MAX_BLOCKS_IN_RESPONSE: usize = 128;
 
 const LOG_TARGET: &str = "sync";
 const MAX_BODY_BYTES: usize = 8 * 1024 * 1024;
@@ -568,7 +570,7 @@ impl<B: BlockT> BlockDownloader<B> for FullBlockDownloader {
 		&self,
 		who: PeerId,
 		request: BlockRequest<B>,
-	) -> Result<Result<Vec<u8>, RequestFailure>, oneshot::Canceled> {
+	) -> Result<Result<(Vec<u8>, ProtocolName), RequestFailure>, oneshot::Canceled> {
 		// Build the request protobuf.
 		let bytes = BlockRequestSchema {
 			fields: request.fields.to_be_u32(),
