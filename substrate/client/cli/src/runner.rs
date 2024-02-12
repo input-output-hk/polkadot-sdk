@@ -40,7 +40,9 @@ pub fn build_runtime() -> std::result::Result<tokio::runtime::Runtime, std::io::
 
 /// A Substrate CLI runtime that can be used to run a node or a command
 pub struct Runner<C: SubstrateCli> {
-	config: Configuration,
+    /// The CLI configuration
+	pub config: Configuration,
+    /// Tokio runtime
 	tokio_runtime: tokio::runtime::Runtime,
 	signals: Signals,
 	phantom: PhantomData<C>,
@@ -86,7 +88,7 @@ impl<C: SubstrateCli> Runner<C> {
 	{
 		self.print_node_infos();
 
-		let mut task_manager = self.tokio_runtime.block_on(initialize(self.config))?;
+		let mut task_manager = self.tokio_runtime.block_on( async { initialize(self.config).await })?;
 
 		let res = self
 			.tokio_runtime
@@ -132,32 +134,55 @@ impl<C: SubstrateCli> Runner<C> {
 	}
 
 	/// A helper function that runs a command with the configuration of this node.
-	pub fn sync_run<E>(
+	pub fn sync_run<F, E>(
 		self,
-		runner: impl FnOnce(Configuration) -> std::result::Result<(), E>,
+		runner: impl FnOnce(Configuration) -> F,
 	) -> std::result::Result<(), E>
 	where
+		F: Future<Output = std::result::Result<(), E>>,
 		E: std::error::Error + Send + Sync + 'static + From<ServiceError>,
 	{
-		runner(self.config)
+		self.tokio_runtime.block_on(async {
+			runner(self.config).await
+		})
 	}
 
 	/// A helper function that runs a future with tokio and stops if the process receives
 	/// the signal `SIGTERM` or `SIGINT`.
-	pub fn async_run<F, E>(
+	pub fn async_run<F, Fut, E>(
 		self,
-		runner: impl FnOnce(Configuration) -> std::result::Result<(F, TaskManager), E>,
+		runner: impl FnOnce(Configuration) -> Fut,
 	) -> std::result::Result<(), E>
 	where
+		Fut: Future<Output = std::result::Result<(F, TaskManager), E>>,
 		F: Future<Output = std::result::Result<(), E>>,
 		E: std::error::Error + Send + Sync + 'static + From<ServiceError> + From<CliError>,
 	{
-		let (future, task_manager) = runner(self.config)?;
+		let (future, task_manager) = self.tokio_runtime.block_on(async {
+			runner(self.config).await
+		})?;
 		self.tokio_runtime.block_on(self.signals.run_until_signal(future.fuse()))?;
 		// Drop the task manager before dropping the rest, to ensure that all futures were informed
 		// about the shut down.
 		drop(task_manager);
 		Ok(())
+	}
+
+	/// Block on a future until it returns `Some` or the process receives the
+	/// signal `SIGTERM` or `SIGINT`.
+	pub fn interruptible_block_on<Fut, Ret>(
+		&self,
+		f: Fut
+	) -> std::result::Result<Ret, Box<dyn std::error::Error>>
+	where Fut: Future<Output = Option<Ret>>
+	{
+		let signals = self
+			.tokio_runtime
+			.block_on(async { Signals::capture() })
+			.map_err(|err| format!("Failed to capture signals: {:?}", err))?;
+
+		let result = self.tokio_runtime.block_on(signals.run_until_signal_f(f.fuse()));
+		result.ok_or_else(|| "Interrupted".into())
 	}
 
 	/// Get an immutable reference to the node Configuration
@@ -251,18 +276,14 @@ mod tests {
 				trie_cache_maximum_size: None,
 				state_pruning: None,
 				blocks_pruning: sc_client_db::BlocksPruning::KeepAll,
-				chain_spec: Box::new(GenericChainSpec::from_genesis(
-					"test",
-					"test_id",
-					ChainType::Development,
-					|| unimplemented!("Not required in tests"),
-					Vec::new(),
-					None,
-					None,
-					None,
-					None,
-					NoExtension::None,
-				)),
+				chain_spec: Box::new(
+					GenericChainSpec::<()>::builder(Default::default(), NoExtension::None)
+						.with_name("test")
+						.with_id("test_id")
+						.with_chain_type(ChainType::Development)
+						.with_genesis_config_patch(Default::default())
+						.build(),
+				),
 				wasm_method: Default::default(),
 				wasm_runtime_overrides: None,
 				rpc_addr: None,
