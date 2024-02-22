@@ -573,7 +573,7 @@ mod tests {
 		runtime::{Header, H256},
 		TestClient,
 	};
-	use crate::standalone::CreateInherentDataProvidersNowOrAtSlot;
+	use crate::standalone::CurrentSlotProvider;
 
 	const SLOT_DURATION_MS: u64 = 1000;
 
@@ -633,23 +633,6 @@ mod tests {
 	pub struct TestCIDP;
 
 	#[async_trait::async_trait]
-	impl CreateInherentDataProviders<Block, ()> for TestCIDP {
-		type InherentDataProviders = (InherentDataProvider,);
-
-		async fn create_inherent_data_providers(
-			&self,
-			_parent: <Block as BlockT>::Hash,
-			_extra_args: (),
-		) -> Result<Self::InherentDataProviders, Box<dyn std::error::Error + Send + Sync>> {
-			let slot = InherentDataProvider::from_timestamp_and_slot_duration(
-				Timestamp::current(),
-				SlotDuration::from_millis(SLOT_DURATION_MS),
-			);
-			Ok((slot,))
-		}
-	}
-
-	#[async_trait::async_trait]
 	impl CreateInherentDataProviders<Block, Slot> for TestCIDP {
 		type InherentDataProviders = ();
 
@@ -662,7 +645,11 @@ mod tests {
 		}
 	}
 
-	impl CreateInherentDataProvidersNowOrAtSlot<TestBlock> for TestCIDP {}
+	impl CurrentSlotProvider for TestCIDP {
+		fn slot(&self) -> Slot {
+			Slot::from_timestamp(Timestamp::current(), SlotDuration::from_millis(SLOT_DURATION_MS))
+		}
+	}
 
 	impl TestNetFactory for AuraTestNet {
 		type Verifier = AuraVerifier;
