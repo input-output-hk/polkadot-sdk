@@ -38,7 +38,6 @@ use sp_runtime::{
 };
 
 pub use sc_consensus_slots::check_equivocation;
-use sp_inherents::CreateInherentDataProviders;
 use super::{
 	AuraApi, AuthorityId, CompatibilityMode, CompatibleDigestItem, SlotDuration, LOG_TARGET,
 };
@@ -320,11 +319,11 @@ where
 	}
 }
 
-/// When verifying a block, we need to create some of the inherents with current slot and some with
-/// the slot of the block which is being verified. This trait makes it more verbose.
-pub trait CreateInherentDataProvidersNowOrAtSlot<Block: BlockT>:
-CreateInherentDataProviders<Block, ()> + CreateInherentDataProviders<Block, Slot>
+/// Provides the current slot for Aura verification purpose.
+pub trait CurrentSlotProvider
 {
+	/// Returns the current slot, according to wall-time and slot duration configuration.
+	fn slot(&self) -> Slot;
 }
 
 #[cfg(test)]

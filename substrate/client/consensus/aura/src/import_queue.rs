@@ -20,7 +20,7 @@
 
 use crate::{
 	authorities,
-	standalone::{CreateInherentDataProvidersNowOrAtSlot, SealVerificationError},
+	standalone::{CurrentSlotProvider, SealVerificationError},
 	AuthorityId, CompatibilityMode, Error,
 	LOG_TARGET,
 };
@@ -32,7 +32,7 @@ use sc_consensus::{
 	block_import::{BlockImport, BlockImportParams, ForkChoiceStrategy},
 	import_queue::{BasicQueue, BoxJustificationImport, DefaultImportQueue, Verifier},
 };
-use sc_consensus_slots::{check_equivocation, CheckedHeader, InherentDataProviderExt};
+use sc_consensus_slots::{check_equivocation, CheckedHeader};
 use sc_telemetry::{telemetry, TelemetryHandle, CONSENSUS_DEBUG, CONSENSUS_TRACE};
 use sp_api::{ApiExt, ProvideRuntimeApi};
 use sp_block_builder::BlockBuilder as BlockBuilderApi;
@@ -41,9 +41,9 @@ use sp_consensus::Error as ConsensusError;
 use sp_consensus_aura::AuraApi;
 use sp_consensus_slots::Slot;
 use sp_core::crypto::Pair;
-use sp_inherents::{CreateInherentDataProviders, InherentData, InherentDataProvider as _, InherentDataProvider};
+use sp_inherents::{CreateInherentDataProviders, InherentData, InherentDataProvider};
 use sp_runtime::{
-	traits::{Block as BlockT, Block, Header, NumberFor},
+	traits::{Block as BlockT, Header, NumberFor},
 	DigestItem,
 };
 use std::{fmt::Debug, marker::PhantomData, sync::Arc};
@@ -137,14 +137,16 @@ where
 		&self,
 		block: B,
 		at_hash: B::Hash,
-		inherent_data: sp_inherents::InherentData,
-		create_inherent_data_providers: CIDP::InherentDataProviders,
+		inherent_data_providers: CIDP::InherentDataProviders,
 	) -> Result<(), Error<B>>
 	where
 		C: ProvideRuntimeApi<B>,
 		C::Api: BlockBuilderApi<B>,
-		CIDP: CreateInherentDataProviders<B, ()>,
+		CIDP: CreateInherentDataProviders<B, Slot>,
 	{
+		let inherent_data =
+			create_inherent_data::<B>(&inherent_data_providers).await?;
+
 		let inherent_res = self
 			.client
 			.runtime_api()
@@ -153,7 +155,7 @@ where
 
 		if !inherent_res.ok() {
 			for (i, e) in inherent_res.into_errors() {
-				match create_inherent_data_providers.try_handle_error(&i, &e).await {
+				match inherent_data_providers.try_handle_error(&i, &e).await {
 					Some(res) => res.map_err(Error::Inherent)?,
 					None => return Err(Error::UnknownInherentError(i)),
 				}
@@ -172,9 +174,7 @@ where
 	P: Pair,
 	P::Public: Codec + Debug,
 	P::Signature: Codec,
-	CIDP: CreateInherentDataProvidersNowOrAtSlot<B> + Send + Sync,
-	<CIDP as CreateInherentDataProviders<B, ()>>::InherentDataProviders:
-	InherentDataProviderExt + Send + Sync,
+	CIDP: CurrentSlotProvider + CreateInherentDataProviders<B, Slot> + Send + Sync,
 {
 	async fn verify(
 		&mut self,
@@ -202,13 +202,7 @@ where
 		)
 		.map_err(|e| format!("Could not fetch authorities at {:?}: {}", parent_hash, e))?;
 
-		let inherent_data_provider =
-			create_inherent_data_provider(&self.create_inherent_data_providers, parent_hash, ())
-				.await?;
-
-		let mut inherent_data = create_inherent_data::<B>(&inherent_data_provider).await?;
-
-		let slot_now = inherent_data_provider.slot();
+		let slot_now = self.create_inherent_data_providers.slot();
 
 		// we add one to allow for some small drift.
 		// FIXME #1019 in the future, alter this queue to allow deferring of
@@ -230,12 +224,12 @@ where
 				if let Some(inner_body) = block.body.take() {
 					let new_block = B::new(pre_header.clone(), inner_body);
 
-					extend_inherent_data(
-						&self.create_inherent_data_providers,
-						parent_hash,
-						slot,
-						&mut inherent_data,
-					)
+					let inherent_data_providers =
+						create_inherent_data_provider(
+							&self.create_inherent_data_providers,
+							parent_hash,
+							slot,
+						)
 						.await?;
 
 					// skip the inherents verification if the runtime API is old or not expected to
@@ -249,8 +243,7 @@ where
 						self.check_inherents(
 							new_block.clone(),
 							parent_hash,
-							inherent_data,
-							inherent_data_provider,
+							inherent_data_providers,
 						)
 						.await
 						.map_err(|e| e.to_string())?;
@@ -369,8 +362,7 @@ where
 	P::Public: Codec + Debug,
 	P::Signature: Codec,
 	S: sp_core::traits::SpawnEssentialNamed,
-	CIDP: CreateInherentDataProvidersNowOrAtSlot<Block> + Sync + Send + 'static,
-	<CIDP as CreateInherentDataProviders<Block, ()>>::InherentDataProviders: InherentDataProviderExt + Send + Sync,
+	CIDP: CurrentSlotProvider + CreateInherentDataProviders<Block, Slot> + Sync + Send + 'static,
 {
 	let verifier = build_verifier::<P, _, _, _>(BuildVerifierParams {
 		client,
@@ -418,19 +410,6 @@ pub fn build_verifier<P, C, CIDP, N>(
 	)
 }
 
-async fn extend_inherent_data<B: BlockT, ExtraArg>(
-	cidp: &impl CreateInherentDataProviders<B, ExtraArg>,
-	hash: B::Hash,
-	extra_arg: ExtraArg,
-	inherent_data: &mut InherentData,
-) -> Result<(), String> {
-	Ok(create_inherent_data_provider(cidp, hash, extra_arg)
-		.await?
-		.provide_inherent_data(inherent_data)
-		.await
-		.map_err(Error::<B>::Inherent)?)
-}
-
 async fn create_inherent_data_provider<CIDP, B: BlockT, ExtraArg>(
 	cidp: &CIDP,
 	hash: B::Hash,
@@ -446,6 +425,6 @@ async fn create_inherent_data_provider<CIDP, B: BlockT, ExtraArg>(
 
 async fn create_inherent_data<B: BlockT>(
 	provider: &impl InherentDataProvider,
-) -> Result<InherentData, String> {
+) -> Result<InherentData, Error<B>> {
 	Ok(provider.create_inherent_data().await.map_err(Error::<B>::Inherent)?)
 }
