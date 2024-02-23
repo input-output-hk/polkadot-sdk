@@ -418,6 +418,12 @@ impl sp_runtime::traits::Convert<AccountId, Option<AccountId>> for ValidatorIdOf
 	}
 }
 
+impl sp_sidechains_session::CurrentSessionIndex for Runtime {
+	fn current_session_index() -> SessionIndex {
+		Session::current_index()
+	}
+}
+
 impl pallet_session::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type ValidatorId = AccountId;
@@ -428,12 +434,6 @@ impl pallet_session::Config for Runtime {
 	type SessionHandler = <SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
 	type Keys = SessionKeys;
 	type WeightInfo = weights::pallet_session::WeightInfo<Runtime>;
-}
-
-impl sp_sidechains_session::CurrentSessionIndex for Runtime {
-	fn current_session_index() -> sp_staking::SessionIndex {
-		Session::current_index()
-	}
 }
 
 pub struct FullIdentificationOf;
