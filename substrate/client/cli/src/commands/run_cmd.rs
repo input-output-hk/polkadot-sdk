@@ -156,49 +156,55 @@ pub struct RunCmd {
 	/// Shortcut for `--name Alice --validator`.
 	///
 	/// Session keys for `Alice` are added to keystore.
-	#[arg(long, conflicts_with_all = &["bob", "charlie", "dave", "eve", "ferdie", "one", "two"])]
+	#[arg(long, conflicts_with_all = &["bob", "charlie", "dave", "eve", "ferdie", "greg", "one", "two"])]
 	pub alice: bool,
 
 	/// Shortcut for `--name Bob --validator`.
 	///
 	/// Session keys for `Bob` are added to keystore.
-	#[arg(long, conflicts_with_all = &["alice", "charlie", "dave", "eve", "ferdie", "one", "two"])]
+	#[arg(long, conflicts_with_all = &["alice", "charlie", "dave", "eve", "ferdie", "greg", "one", "two"])]
 	pub bob: bool,
 
 	/// Shortcut for `--name Charlie --validator`.
 	///
 	/// Session keys for `Charlie` are added to keystore.
-	#[arg(long, conflicts_with_all = &["alice", "bob", "dave", "eve", "ferdie", "one", "two"])]
+	#[arg(long, conflicts_with_all = &["alice", "bob", "dave", "eve", "ferdie", "greg", "one", "two"])]
 	pub charlie: bool,
 
 	/// Shortcut for `--name Dave --validator`.
 	///
 	/// Session keys for `Dave` are added to keystore.
-	#[arg(long, conflicts_with_all = &["alice", "bob", "charlie", "eve", "ferdie", "one", "two"])]
+	#[arg(long, conflicts_with_all = &["alice", "bob", "charlie", "eve", "ferdie", "greg", "one", "two"])]
 	pub dave: bool,
 
 	/// Shortcut for `--name Eve --validator`.
 	///
 	/// Session keys for `Eve` are added to keystore.
-	#[arg(long, conflicts_with_all = &["alice", "bob", "charlie", "dave", "ferdie", "one", "two"])]
+	#[arg(long, conflicts_with_all = &["alice", "bob", "charlie", "dave", "ferdie", "greg", "one", "two"])]
 	pub eve: bool,
 
 	/// Shortcut for `--name Ferdie --validator`.
 	///
 	/// Session keys for `Ferdie` are added to keystore.
-	#[arg(long, conflicts_with_all = &["alice", "bob", "charlie", "dave", "eve", "one", "two"])]
+	#[arg(long, conflicts_with_all = &["alice", "bob", "charlie", "dave", "eve", "greg", "one", "two"])]
 	pub ferdie: bool,
+
+	/// Shortcut for `--name Greg --validator`.
+	///
+	/// Session keys for `Greg` are added to keystore.
+	#[arg(long, conflicts_with_all = &["alice", "bob", "charlie", "dave", "eve", "ferdie", "one", "two"])]
+	pub greg: bool,
 
 	/// Shortcut for `--name One --validator`.
 	///
 	/// Session keys for `One` are added to keystore.
-	#[arg(long, conflicts_with_all = &["alice", "bob", "charlie", "dave", "eve", "ferdie", "two"])]
+	#[arg(long, conflicts_with_all = &["alice", "bob", "charlie", "dave", "eve", "ferdie", "greg", "two"])]
 	pub one: bool,
 
 	/// Shortcut for `--name Two --validator`.
 	///
 	/// Session keys for `Two` are added to keystore.
-	#[arg(long, conflicts_with_all = &["alice", "bob", "charlie", "dave", "eve", "ferdie", "one"])]
+	#[arg(long, conflicts_with_all = &["alice", "bob", "charlie", "dave", "eve", "ferdie", "greg", "one"])]
 	pub two: bool,
 
 	/// Enable authoring even when offline.
@@ -235,6 +241,8 @@ impl RunCmd {
 			Some(Eve)
 		} else if self.ferdie {
 			Some(Ferdie)
+		} else if self.greg {
+			Some(Greg)
 		} else if self.one {
 			Some(One)
 		} else if self.two {
