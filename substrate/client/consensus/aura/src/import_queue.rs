@@ -32,7 +32,7 @@ use sc_consensus::{
 	block_import::{BlockImport, BlockImportParams, ForkChoiceStrategy},
 	import_queue::{BasicQueue, BoxJustificationImport, DefaultImportQueue, Verifier},
 };
-use sc_consensus_slots::{check_equivocation, CheckedHeader};
+use sc_consensus_slots::{check_equivocation, CheckedHeader, InherentDigest};
 use sc_telemetry::{telemetry, TelemetryHandle, CONSENSUS_DEBUG, CONSENSUS_TRACE};
 use sp_api::{ApiExt, ProvideRuntimeApi};
 use sp_block_builder::BlockBuilder as BlockBuilderApi;
@@ -101,16 +101,16 @@ where
 }
 
 /// A verifier for Aura blocks.
-pub struct AuraVerifier<C, P, CIDP, N> {
+pub struct AuraVerifier<C, P, CIDP, N, ID> {
 	client: Arc<C>,
 	create_inherent_data_providers: CIDP,
 	check_for_equivocation: CheckForEquivocation,
 	telemetry: Option<TelemetryHandle>,
 	compatibility_mode: CompatibilityMode<N>,
-	_phantom: PhantomData<fn() -> P>,
+	_phantom: PhantomData<(fn() -> P, ID)>,
 }
 
-impl<C, P, CIDP, N> AuraVerifier<C, P, CIDP, N> {
+impl<C, P, CIDP, N, ID> AuraVerifier<C, P, CIDP, N, ID> {
 	pub(crate) fn new(
 		client: Arc<C>,
 		create_inherent_data_providers: CIDP,
@@ -129,7 +129,7 @@ impl<C, P, CIDP, N> AuraVerifier<C, P, CIDP, N> {
 	}
 }
 
-impl<C, P, CIDP, N> AuraVerifier<C, P, CIDP, N>
+impl<C, P, CIDP, N, ID> AuraVerifier<C, P, CIDP, N, ID>
 where
 	CIDP: Send,
 {
@@ -142,7 +142,8 @@ where
 	where
 		C: ProvideRuntimeApi<B>,
 		C::Api: BlockBuilderApi<B>,
-		CIDP: CreateInherentDataProviders<B, Slot>,
+		CIDP: CreateInherentDataProviders<B, (Slot, <ID as InherentDigest>::Value)>,
+		ID: InherentDigest
 	{
 		let inherent_data =
 			create_inherent_data::<B>(&inherent_data_providers).await?;
@@ -167,14 +168,15 @@ where
 }
 
 #[async_trait::async_trait]
-impl<B: BlockT, C, P, CIDP> Verifier<B> for AuraVerifier<C, P, CIDP, NumberFor<B>>
+impl<B: BlockT, C, P, CIDP, ID> Verifier<B> for AuraVerifier<C, P, CIDP, NumberFor<B>, ID>
 where
 	C: ProvideRuntimeApi<B> + Send + Sync + sc_client_api::backend::AuxStore,
 	C::Api: BlockBuilderApi<B> + AuraApi<B, AuthorityId<P>> + ApiExt<B>,
 	P: Pair,
 	P::Public: Codec + Debug,
 	P::Signature: Codec,
-	CIDP: CurrentSlotProvider + CreateInherentDataProviders<B, Slot> + Send + Sync,
+	CIDP: CurrentSlotProvider + CreateInherentDataProviders<B, (Slot, <ID as InherentDigest>::Value)> + Send + Sync,
+	ID: InherentDigest + Send + Sync + 'static,
 {
 	async fn verify(
 		&mut self,
@@ -210,12 +212,14 @@ where
 		let checked_header = check_header::<C, B, P>(
 			&self.client,
 			slot_now + 1,
-			block.header,
+			block.header.clone(),
 			hash,
 			&authorities[..],
 			self.check_for_equivocation,
 		)
 		.map_err(|e| e.to_string())?;
+		let inherent_digest = <ID as InherentDigest>::value_from_digest(block.header.digest().logs())
+			.map_err(|e| format!("Failed to retrieve inherent digest from header at {:?}: {}", parent_hash, e))?;
 		match checked_header {
 			CheckedHeader::Checked(pre_header, (slot, seal)) => {
 				// if the body is passed through, we need to use the runtime
@@ -228,7 +232,7 @@ where
 						create_inherent_data_provider(
 							&self.create_inherent_data_providers,
 							parent_hash,
-							slot,
+							(slot, inherent_digest),
 						)
 						.await?;
 
@@ -333,7 +337,7 @@ pub struct ImportQueueParams<'a, Block: BlockT, I, C, S, CIDP> {
 }
 
 /// Start an import queue for the Aura consensus algorithm.
-pub fn import_queue<P, Block, I, C, S, CIDP>(
+pub fn import_queue<P, Block, I, C, S, CIDP, ID>(
 	ImportQueueParams {
 		block_import,
 		justification_import,
@@ -362,9 +366,10 @@ where
 	P::Public: Codec + Debug,
 	P::Signature: Codec,
 	S: sp_core::traits::SpawnEssentialNamed,
-	CIDP: CurrentSlotProvider + CreateInherentDataProviders<Block, Slot> + Sync + Send + 'static,
+	CIDP: CurrentSlotProvider + CreateInherentDataProviders<Block, (Slot, <ID as InherentDigest>::Value)> + Sync + Send + 'static,
+	ID: InherentDigest + Send + Sync + 'static,
 {
-	let verifier = build_verifier::<P, _, _, _>(BuildVerifierParams {
+	let verifier = build_verifier::<P, _, _, _, ID>(BuildVerifierParams {
 		client,
 		create_inherent_data_providers,
 		check_for_equivocation,
@@ -392,7 +397,7 @@ pub struct BuildVerifierParams<C, CIDP, N> {
 }
 
 /// Build the [`AuraVerifier`]
-pub fn build_verifier<P, C, CIDP, N>(
+pub fn build_verifier<P, C, CIDP, N, ID>(
 	BuildVerifierParams {
 		client,
 		create_inherent_data_providers,
@@ -400,8 +405,8 @@ pub fn build_verifier<P, C, CIDP, N>(
 		telemetry,
 		compatibility_mode,
 	}: BuildVerifierParams<C, CIDP, N>,
-) -> AuraVerifier<C, P, CIDP, N> {
-	AuraVerifier::<_, P, _, _>::new(
+) -> AuraVerifier<C, P, CIDP, N, ID> {
+	AuraVerifier::<_, P, _, _, ID>::new(
 		client,
 		create_inherent_data_providers,
 		check_for_equivocation,

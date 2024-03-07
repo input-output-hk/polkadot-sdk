@@ -34,6 +34,7 @@ use std::{fmt::Debug, marker::PhantomData, pin::Pin, sync::Arc};
 
 use codec::Codec;
 use futures::prelude::*;
+pub use sc_consensus_slots::InherentDigest;
 
 use sc_client_api::{backend::AuxStore, BlockOf};
 use sc_consensus::{BlockImport, BlockImportParams, ForkChoiceStrategy, StateAction};
@@ -151,7 +152,7 @@ pub struct StartAuraParams<C, SC, I, PF, SO, L, CIDP, BS, N> {
 }
 
 /// Start the aura worker. The returned future should be run in a futures executor.
-pub fn start_aura<P, B, C, SC, I, PF, SO, L, CIDP, BS, Error>(
+pub fn start_aura<P, B, C, SC, I, PF, SO, L, CIDP, BS, Error, ID>(
 	StartAuraParams {
 		slot_duration,
 		client,
@@ -187,8 +188,9 @@ where
 	CIDP::InherentDataProviders: InherentDataProviderExt + Send,
 	BS: BackoffAuthoringBlocksStrategy<NumberFor<B>> + Send + Sync + 'static,
 	Error: std::error::Error + Send + From<ConsensusError> + 'static,
+	ID: InherentDigest + Send + Sync + 'static,
 {
-	let worker = build_aura_worker::<P, _, _, _, _, _, _, _, _>(BuildAuraWorkerParams {
+	let worker = build_aura_worker::<P, _, _, _, _, _, _, _, _, ID>(BuildAuraWorkerParams {
 		client,
 		block_import,
 		proposer_factory,
@@ -250,7 +252,7 @@ pub struct BuildAuraWorkerParams<C, I, PF, SO, L, BS, N> {
 /// Build the aura worker.
 ///
 /// The caller is responsible for running this worker, otherwise it will do nothing.
-pub fn build_aura_worker<P, B, C, PF, I, SO, L, BS, Error>(
+pub fn build_aura_worker<P, B, C, PF, I, SO, L, BS, Error, ID>(
 	BuildAuraWorkerParams {
 		client,
 		block_import,
@@ -288,6 +290,7 @@ where
 	SO: SyncOracle + Send + Sync + Clone,
 	L: sc_consensus::JustificationSyncLink<B>,
 	BS: BackoffAuthoringBlocksStrategy<NumberFor<B>> + Send + Sync + 'static,
+	ID: InherentDigest + Send + Sync + 'static,
 {
 	AuraWorker {
 		client,
@@ -302,11 +305,11 @@ where
 		block_proposal_slot_portion,
 		max_block_proposal_slot_portion,
 		compatibility_mode,
-		_phantom: PhantomData::<fn() -> P>,
+		_phantom: PhantomData::<(fn() -> P, ID)>,
 	}
 }
 
-struct AuraWorker<C, E, I, P, SO, L, BS, N> {
+struct AuraWorker<C, E, I, P, SO, L, BS, N, ID> {
 	client: Arc<C>,
 	block_import: I,
 	env: E,
@@ -319,12 +322,12 @@ struct AuraWorker<C, E, I, P, SO, L, BS, N> {
 	max_block_proposal_slot_portion: Option<SlotProportion>,
 	telemetry: Option<TelemetryHandle>,
 	compatibility_mode: CompatibilityMode<N>,
-	_phantom: PhantomData<fn() -> P>,
+	_phantom: PhantomData<(fn() -> P, ID)>,
 }
 
 #[async_trait::async_trait]
-impl<B, C, E, I, P, Error, SO, L, BS> sc_consensus_slots::SimpleSlotWorker<B>
-	for AuraWorker<C, E, I, P, SO, L, BS, NumberFor<B>>
+impl<B, C, E, I, P, Error, SO, L, BS, ID> sc_consensus_slots::SimpleSlotWorker<B>
+	for AuraWorker<C, E, I, P, SO, L, BS, NumberFor<B>, ID>
 where
 	B: BlockT,
 	C: ProvideRuntimeApi<B> + BlockOf + HeaderBackend<B> + Sync,
@@ -339,6 +342,7 @@ where
 	L: sc_consensus::JustificationSyncLink<B>,
 	BS: BackoffAuthoringBlocksStrategy<NumberFor<B>> + Send + Sync + 'static,
 	Error: std::error::Error + Send + From<ConsensusError> + 'static,
+	ID: InherentDigest + Send + Sync + 'static,
 {
 	type BlockImport = I;
 	type SyncOracle = SO;
@@ -348,6 +352,7 @@ where
 	type Proposer = E::Proposer;
 	type Claim = P::Public;
 	type AuxData = Vec<AuthorityId<P>>;
+	type InherentDigest = ID;
 
 	fn logging_target(&self) -> &'static str {
 		"aura"
