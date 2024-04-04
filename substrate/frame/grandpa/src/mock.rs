@@ -34,6 +34,7 @@ use pallet_session::historical as pallet_session_historical;
 use sp_consensus_grandpa::{RoundNumber, SetId, GRANDPA_ENGINE_ID};
 use sp_core::{crypto::KeyTypeId, H256};
 use sp_keyring::Ed25519Keyring;
+use sp_partner_chains_session::CurrentSessionIndex;
 use sp_runtime::{
 	curve::PiecewiseLinear,
 	impl_opaque_keys,
@@ -101,6 +102,12 @@ impl pallet_session::Config for Test {
 impl pallet_session::historical::Config for Test {
 	type FullIdentification = pallet_staking::Exposure<u64, u128>;
 	type FullIdentificationOf = pallet_staking::ExposureOf<Self>;
+}
+
+impl CurrentSessionIndex for Test {
+	fn current_session_index() -> SessionIndex {
+		<pallet_session::Pallet<Test>>::current_index()
+	}
 }
 
 impl pallet_authorship::Config for Test {

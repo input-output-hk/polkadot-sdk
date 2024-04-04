@@ -1472,6 +1472,12 @@ impl pallet_im_online::Config for Runtime {
 	type MaxPeerInHeartbeats = MaxPeerInHeartbeats;
 }
 
+impl sp_partner_chains_session::CurrentSessionIndex for Runtime {
+	fn current_session_index() -> sp_staking::SessionIndex {
+		Session::current_index()
+	}
+}
+
 impl pallet_offences::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type IdentificationTuple = pallet_session::historical::IdentificationTuple<Self>;
