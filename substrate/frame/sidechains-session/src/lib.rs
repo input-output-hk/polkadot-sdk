@@ -1,5 +1,5 @@
 // This file was copied from substrate/frame/session/src/lib.rs and heavily modified.
-// History of modifications can be seen by comparing the two files.
+// Modifications can be seen by comparing the two files.
 
 // Copyright (C) Parity Technologies (UK) Ltd.
 // SPDX-License-Identifier: Apache-2.0

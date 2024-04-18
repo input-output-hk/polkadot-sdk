@@ -1,6 +1,6 @@
 [package]
 name = "pallet-sidechains-session"
-version = "4.0.0-dev"
+version = "1.0.0"
 repository.workspace = true
 description = "FRAME pallet for setting validators with InherentData and session management"
 edition = "2021"
