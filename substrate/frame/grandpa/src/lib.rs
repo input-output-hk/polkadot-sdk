@@ -484,7 +484,7 @@ impl<T: Config> Pallet<T> {
 
 			if forced.is_some() {
 				if Self::next_forced().map_or(false, |next| next > scheduled_at) {
-					return Err(Error::<T>::TooSoon.into())
+					return Err(Error::<T>::TooSoon.into());
 				}
 
 				// only allow the next forced change when twice the window has passed since
@@ -562,7 +562,7 @@ impl<T: Config> sp_runtime::BoundToRuntimeAppPublic for Pallet<T> {
 
 impl<T: Config> OneSessionHandler<T::AccountId> for Pallet<T>
 where
-	T: sp_sidechains_session::CurrentSessionIndex,
+	T: sp_partner_chains_session::CurrentSessionIndex,
 {
 	type Key = AuthorityId;
 
@@ -616,7 +616,8 @@ where
 
 		// update the mapping to note that the current set corresponds to the
 		// latest equivalent session (i.e. now).
-		let session_index = <T as sp_sidechains_session::CurrentSessionIndex>::current_session_index();
+		let session_index =
+			<T as sp_partner_chains_session::CurrentSessionIndex>::current_session_index();
 		SetIdSession::<T>::insert(current_set_id, &session_index);
 	}
 
