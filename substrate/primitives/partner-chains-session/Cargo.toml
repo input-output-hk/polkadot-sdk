@@ -1,5 +1,5 @@
 [package]
-name = "sp-sidechains-session"
+name = "sp-partner-chains-session"
 version = "4.0.0-dev"
 license = "Apache-2.0"
 repository.workspace = true

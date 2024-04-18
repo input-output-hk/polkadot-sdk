@@ -34,6 +34,7 @@ use pallet_session::historical as pallet_session_historical;
 use sp_consensus_grandpa::{RoundNumber, SetId, GRANDPA_ENGINE_ID};
 use sp_core::{crypto::KeyTypeId, H256};
 use sp_keyring::Ed25519Keyring;
+use sp_partner_chains_session::CurrentSessionIndex;
 use sp_runtime::{
 	curve::PiecewiseLinear,
 	impl_opaque_keys,
@@ -41,7 +42,6 @@ use sp_runtime::{
 	traits::OpaqueKeys,
 	BuildStorage, DigestItem, Perbill,
 };
-use sp_sidechains_session::CurrentSessionIndex;
 use sp_staking::{EraIndex, SessionIndex};
 
 type Block = frame_system::mocking::MockBlock<Test>;

@@ -7030,9 +7030,9 @@ dependencies = [
  "sp-io",
  "sp-mixnet",
  "sp-offchain",
+ "sp-partner-chains-session",
  "sp-runtime",
  "sp-session",
- "sp-sidechains-session",
  "sp-staking",
  "sp-statement-store",
  "sp-std",
@@ -9892,9 +9892,9 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-keyring",
+ "sp-partner-chains-session",
  "sp-runtime",
  "sp-session",
- "sp-sidechains-session",
  "sp-staking",
  "sp-std",
 ]
@@ -10390,6 +10390,24 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-partner-chains-session"
+version = "1.0.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "impl-trait-for-tuples",
+ "log",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-partner-chains-session",
+ "sp-runtime",
+ "sp-staking",
  "sp-std",
 ]
 
@@ -15004,9 +15022,9 @@ dependencies = [
  "sp-keyring",
  "sp-mmr-primitives",
  "sp-offchain",
+ "sp-partner-chains-session",
  "sp-runtime",
  "sp-session",
- "sp-sidechains-session",
  "sp-staking",
  "sp-std",
  "sp-storage",
@@ -18798,6 +18816,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "sp-partner-chains-session"
+version = "4.0.0-dev"
+dependencies = [
+ "sp-staking",
+]
+
+[[package]]
 name = "sp-rpc"
 version = "26.0.0"
 dependencies = [
@@ -18922,13 +18947,6 @@ dependencies = [
  "sp-runtime",
  "sp-staking",
  "sp-std",
-]
-
-[[package]]
-name = "sp-sidechains-session"
-version = "4.0.0-dev"
-dependencies = [
- "sp-staking",
 ]
 
 [[package]]
@@ -21761,9 +21779,9 @@ dependencies = [
  "sp-mmr-primitives",
  "sp-npos-elections",
  "sp-offchain",
+ "sp-partner-chains-session",
  "sp-runtime",
  "sp-session",
- "sp-sidechains-session",
  "sp-staking",
  "sp-std",
  "sp-storage",

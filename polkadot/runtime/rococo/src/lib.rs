@@ -417,7 +417,7 @@ impl sp_runtime::traits::Convert<AccountId, Option<AccountId>> for ValidatorIdOf
 	}
 }
 
-impl sp_sidechains_session::CurrentSessionIndex for Runtime {
+impl sp_partner_chains_session::CurrentSessionIndex for Runtime {
 	fn current_session_index() -> SessionIndex {
 		Session::current_index()
 	}
