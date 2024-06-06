@@ -32,14 +32,14 @@ use sc_consensus::{
 	block_import::{BlockImport, BlockImportParams, ForkChoiceStrategy},
 	import_queue::{BasicQueue, BoxJustificationImport, DefaultImportQueue, Verifier},
 };
-use sc_consensus_slots::{check_equivocation, CheckedHeader, InherentDigest};
+use sc_consensus_slots::{check_equivocation, CheckedHeader};
 use sc_telemetry::{telemetry, TelemetryHandle, CONSENSUS_DEBUG, CONSENSUS_TRACE};
 use sp_api::{ApiExt, ProvideRuntimeApi};
 use sp_block_builder::BlockBuilder as BlockBuilderApi;
 use sp_blockchain::HeaderBackend;
 use sp_consensus::Error as ConsensusError;
 use sp_consensus_aura::AuraApi;
-use sp_consensus_slots::Slot;
+use sp_consensus_slots::{InherentDigest, Slot};
 use sp_core::crypto::Pair;
 use sp_inherents::{CreateInherentDataProviders, InherentData, InherentDataProvider};
 use sp_runtime::{

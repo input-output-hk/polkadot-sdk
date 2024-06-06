@@ -39,14 +39,12 @@ use sc_consensus::{BlockImport, JustificationSyncLink};
 use sc_telemetry::{telemetry, TelemetryHandle, CONSENSUS_DEBUG, CONSENSUS_INFO, CONSENSUS_WARN};
 use sp_arithmetic::traits::BaseArithmetic;
 use sp_consensus::{Proposal, Proposer, SelectChain, SyncOracle};
-use sp_consensus_slots::{Slot, SlotDuration};
+use sp_consensus_slots::{InherentDigest, Slot, SlotDuration};
 use sp_inherents::CreateInherentDataProviders;
 use sp_runtime::{
 	traits::{Block as BlockT, HashingFor, Header as HeaderT},
-	DigestItem,
 };
 use std::{
-	error::Error,
 	fmt::Debug,
 	ops::Deref,
 	time::{Duration, Instant},
@@ -79,36 +77,6 @@ pub trait SlotWorker<B: BlockT, Proof> {
 	/// Returns a future that resolves to a [`SlotResult`] iff a block was successfully built in
 	/// the slot. Otherwise `None` is returned.
 	async fn on_slot(&mut self, slot_info: SlotInfo<B>) -> Option<SlotResult<B, Proof>>;
-}
-
-/// Defines parts of inherent data that should be included in header digest
-pub trait InherentDigest {
-	/// Rust type of the inherent digest value
-	type Value: Send + Sync + 'static;
-
-	/// Construct digest items from block's inherent data
-	fn from_inherent_data(
-		inherent_data: &sp_consensus::InherentData,
-	) -> Result<Vec<sp_runtime::DigestItem>, Box<dyn Error + Send + Sync>>;
-
-	/// Retrieve value from digests
-	fn value_from_digest(
-		digests: &[DigestItem],
-	) -> Result<Self::Value, Box<dyn Error + Send + Sync>>;
-}
-
-impl InherentDigest for () {
-	type Value = ();
-
-	fn from_inherent_data(
-		_inherent_data: &sp_consensus::InherentData,
-	) -> Result<Vec<sp_runtime::DigestItem>, Box<dyn Error + Send + Sync>> {
-		Ok(vec![])
-	}
-
-	fn value_from_digest(_digests: &[DigestItem]) -> Result<(), Box<dyn Error + Send + Sync>> {
-		Ok(())
-	}
 }
 
 /// A skeleton implementation for `SlotWorker` which tries to claim a slot at
