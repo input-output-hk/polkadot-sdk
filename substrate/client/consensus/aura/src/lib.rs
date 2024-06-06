@@ -64,10 +64,9 @@ pub use sc_consensus_slots::SlotProportion;
 pub use sp_consensus::SyncOracle;
 pub use sp_consensus_aura::{
 	digests::CompatibleDigestItem,
-	inherents::{InherentDataProvider, InherentType as AuraInherent, INHERENT_IDENTIFIER},
+	inherents::{InherentDataProvider, InherentDigest, InherentType as AuraInherent, INHERENT_IDENTIFIER},
 	AuraApi, ConsensusLog, SlotDuration, AURA_ENGINE_ID,
 };
-pub use sp_consensus_slots::InherentDigest;
 
 const LOG_TARGET: &str = "aura";
 

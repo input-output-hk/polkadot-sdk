@@ -39,8 +39,8 @@ use sc_consensus::{BlockImport, JustificationSyncLink};
 use sc_telemetry::{telemetry, TelemetryHandle, CONSENSUS_DEBUG, CONSENSUS_INFO, CONSENSUS_WARN};
 use sp_arithmetic::traits::BaseArithmetic;
 use sp_consensus::{Proposal, Proposer, SelectChain, SyncOracle};
-use sp_consensus_slots::{InherentDigest, Slot, SlotDuration};
-use sp_inherents::CreateInherentDataProviders;
+use sp_consensus_slots::{Slot, SlotDuration};
+use sp_inherents::{CreateInherentDataProviders, InherentDigest};
 use sp_runtime::{
 	traits::{Block as BlockT, HashingFor, Header as HeaderT},
 };
