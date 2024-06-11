@@ -32,7 +32,7 @@ sp-std = { path = "../../../substrate/primitives/std", default-features = false 
 
 [dev-dependencies]
 sp-consensus-beefy = { path = "../../../substrate/primitives/consensus/beefy" }
-mmr-lib = { package = "ckb-merkle-mountain-range", version = "0.5.2" }
+mmr-lib = { package = "polkadot-ckb-merkle-mountain-range", version = "0.5.2" }
 pallet-beefy-mmr = { path = "../../../substrate/frame/beefy-mmr" }
 pallet-mmr = { path = "../../../substrate/frame/merkle-mountain-range" }
 rand = "0.8.5"
