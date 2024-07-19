@@ -627,6 +627,12 @@ parameter_types! {
 	pub const MaxControllersInDeprecationBatch: u32 = 751;
 }
 
+impl sp_partner_chains_session::CurrentSessionIndex for Runtime {
+	fn current_session_index() -> sp_staking::SessionIndex {
+		Session::current_index()
+	}
+}
+
 impl pallet_staking::Config for Runtime {
 	type Currency = Balances;
 	type CurrencyBalance = Balance;
