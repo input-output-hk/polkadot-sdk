@@ -30,6 +30,7 @@ sp-arithmetic.workspace = true
 sp-genesis-builder.workspace = true
 sp-io.workspace = true
 sp-mmr-primitives.workspace = true
+sp-partner-chains-session.workspace = true
 sp-runtime.workspace = true
 sp-staking.workspace = true
 sp-core.workspace = true
@@ -213,6 +214,7 @@ std = [
 	"sp-mmr-primitives/std",
 	"sp-npos-elections/std",
 	"sp-offchain/std",
+	"sp-partner-chains-session/std",
 	"sp-runtime/std",
 	"sp-session/std",
 	"sp-staking/std",
