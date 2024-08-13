@@ -197,10 +197,7 @@ where
 	let keystore_container = KeystoreContainer::new(&config.keystore)?;
 
 	let task_manager = {
-        let registry = match telemetry {
-            Some(_) => config.prometheus_config.as_ref().map(|cfg| &cfg.registry),
-            None => None,
-        };
+		let registry = config.prometheus_config.as_ref().map(|cfg| &cfg.registry);
 		TaskManager::new(config.tokio_handle.clone(), registry)?
 	};
 
