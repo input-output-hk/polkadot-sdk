@@ -324,17 +324,14 @@ pub mod pallet {
 	}
 
 	#[pallet::storage]
-	#[pallet::getter(fn validators)]
 	// This storage is only needed to keep compatibility with Polkadot.js
 	pub type Validators<T: Config> = StorageValue<_, ValidatorList<T>, ValueQuery>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn validators_and_keys)]
 	pub type ValidatorsAndKeys<T: Config> = StorageValue<_, ValidatorAndKeysList<T>, ValueQuery>;
 
 	/// Current index of the session.
 	#[pallet::storage]
-	#[pallet::getter(fn current_index)]
 	pub type CurrentIndex<T> = StorageValue<_, SessionIndex, ValueQuery>;
 
 	/// Indices of disabled validators.
@@ -343,7 +340,6 @@ pub mod pallet {
 	/// disabled using binary search. It gets cleared when `on_session_ending` returns
 	/// a new set of identities.
 	#[pallet::storage]
-	#[pallet::getter(fn disabled_validators)]
 	pub type DisabledValidators<T> = StorageValue<_, Vec<u32>, ValueQuery>;
 
 	#[pallet::event]
@@ -373,6 +369,25 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
+	/// Public function to access the current set of validators.
+	pub fn validators() -> Vec<T::ValidatorId> {
+		Validators::<T>::get()
+	}
+
+	pub fn validators_and_keys() -> Vec<(T::ValidatorId, T::Keys)> {
+		ValidatorsAndKeys::<T>::get()
+	}
+
+	/// Public function to access the current session index.
+	pub fn current_index() -> SessionIndex {
+		CurrentIndex::<T>::get()
+	}
+
+	/// Public function to access the disabled validators.
+	pub fn disabled_validators() -> Vec<u32> {
+		DisabledValidators::<T>::get()
+	}
+
 	/// Move on to next session. Register new validator set with session keys.
 	pub fn rotate_session() {
 		let session_index = <CurrentIndex<T>>::get();
@@ -420,7 +435,7 @@ impl<T: Config> Pallet<T> {
 	/// Returns `false` either if the validator could not be found or it was already
 	/// disabled.
 	pub fn disable(c: &T::ValidatorId) -> bool {
-		Self::validators_and_keys()
+		ValidatorsAndKeys::<T>::get()
 			.iter()
 			.position(|(i, _)| i == c)
 			.map(|i| Self::disable_index(i as u32))
@@ -480,7 +495,7 @@ impl<T: Config> Pallet<T> {
 
 impl<T: Config> ValidatorRegistration<T::ValidatorId> for Pallet<T> {
 	fn is_registered(id: &T::ValidatorId) -> bool {
-		Self::validators_and_keys().iter().any(|(vid, _)| vid == id)
+		ValidatorsAndKeys::<T>::get().iter().any(|(vid, _)| vid == id)
 	}
 }
 
@@ -498,10 +513,10 @@ impl<T: Config> EstimateNextNewSession<BlockNumberFor<T>> for Pallet<T> {
 
 impl<T: Config> frame_support::traits::DisabledValidators for Pallet<T> {
 	fn is_disabled(index: u32) -> bool {
-		<Pallet<T>>::disabled_validators().binary_search(&index).is_ok()
+		DisabledValidators::<T>::get().binary_search(&index).is_ok()
 	}
 
 	fn disabled_validators() -> Vec<u32> {
-		<Pallet<T>>::disabled_validators()
+		DisabledValidators::<T>::get()
 	}
 }
