@@ -14085,6 +14085,7 @@ dependencies = [
  "pallet-offences-benchmarking",
  "pallet-paged-list",
  "pallet-parameters",
+ "pallet-partner-chains-session",
  "pallet-preimage",
  "pallet-proxy",
  "pallet-ranked-collective",
