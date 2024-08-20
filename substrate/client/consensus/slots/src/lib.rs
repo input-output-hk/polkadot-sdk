@@ -40,10 +40,8 @@ use sc_telemetry::{telemetry, TelemetryHandle, CONSENSUS_DEBUG, CONSENSUS_INFO, 
 use sp_arithmetic::traits::BaseArithmetic;
 use sp_consensus::{Proposal, Proposer, SelectChain, SyncOracle};
 use sp_consensus_slots::{Slot, SlotDuration};
-use sp_inherents::{CreateInherentDataProviders, InherentDigest};
-use sp_runtime::{
-	traits::{Block as BlockT, HashingFor, Header as HeaderT},
-};
+use sp_inherents::CreateInherentDataProviders;
+use sp_runtime::traits::{Block as BlockT, HashingFor, Header as HeaderT};
 use std::{
 	fmt::Debug,
 	ops::Deref,
@@ -108,9 +106,6 @@ pub trait SimpleSlotWorker<B: BlockT> {
 
 	/// Auxiliary data necessary for authoring.
 	type AuxData: Send + Sync + 'static;
-
-	/// Definition of inherent data that should be put in the digest
-	type InherentDigest: InherentDigest + Send + Sync + 'static;
 
 	/// The logging target to use when logging messages.
 	fn logging_target(&self) -> &'static str;
@@ -200,15 +195,7 @@ pub trait SimpleSlotWorker<B: BlockT> {
 
 		let proposing_remaining_duration =
 			end_proposing_at.saturating_duration_since(Instant::now());
-		let mut logs = self.pre_digest_data(slot, claim);
-		let mut inherent_logs = match Self::InherentDigest::from_inherent_data(&inherent_data) {
-			Ok(inherent_logs) => inherent_logs,
-			Err(err) => {
-				info!("Proposing failed: {err}");
-				return None;
-			},
-		};
-		logs.append(&mut inherent_logs);
+		let logs = self.pre_digest_data(slot, claim);
 
 		// deadline our production to 98% of the total time left for proposing. As we deadline
 		// the proposing below to the same total time left, the 2% margin should be enough for
