@@ -22,7 +22,8 @@
 
 use polkadot_sdk::*;
 use staging_node_cli as node_cli;
+use sc_cli;
 
-fn main() -> sc_cli::Result<()> {
+fn main() -> Result<(), sc_cli::Error> {
 	node_cli::run()
 }

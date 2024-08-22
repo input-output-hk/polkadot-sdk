@@ -84,7 +84,7 @@ where
 	CIDP: CreateInherentDataProviders<Block, ()> + Sync + Send + 'static,
 	CIDP::InherentDataProviders: InherentDataProviderExt + Send + Sync,
 {
-	sc_consensus_aura::import_queue::<P, _, _, _, _, _>(sc_consensus_aura::ImportQueueParams {
+	sc_consensus_aura::import_queue::<P, _, _, _, _, _, _>(sc_consensus_aura::ImportQueueParams {
 		block_import,
 		justification_import: None,
 		client,
@@ -113,7 +113,7 @@ pub fn build_verifier<P, C, CIDP, N>(
 		C,
 		CIDP,
 	>,
-) -> AuraVerifier<C, P, CIDP, N> {
+) -> AuraVerifier<C, P, CIDP, N, ID> {
 	sc_consensus_aura::build_verifier(sc_consensus_aura::BuildVerifierParams {
 		client,
 		create_inherent_data_providers,
