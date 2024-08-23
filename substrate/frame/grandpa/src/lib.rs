@@ -564,7 +564,7 @@ impl<T: Config> sp_runtime::BoundToRuntimeAppPublic for Pallet<T> {
 
 impl<T: Config> OneSessionHandler<T::AccountId> for Pallet<T>
 where
-	T: sp_partner_chains_session::CurrentSessionIndex,
+	T: pallet_session::Config,
 {
 	type Key = AuthorityId;
 
@@ -618,7 +618,7 @@ where
 
 		// update the mapping to note that the current set corresponds to the
 		// latest equivalent session (i.e. now).
-		let session_index = <T as sp_partner_chains_session::CurrentSessionIndex>::current_session_index();
+		let session_index = <pallet_session::Pallet<T>>::current_index();
 		SetIdSession::<T>::insert(current_set_id, &session_index);
 	}
 

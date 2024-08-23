@@ -10592,7 +10592,6 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-keyring",
- "sp-partner-chains-session",
  "sp-runtime",
  "sp-session",
  "sp-staking",
