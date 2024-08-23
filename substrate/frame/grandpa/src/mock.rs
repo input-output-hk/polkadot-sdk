@@ -103,12 +103,6 @@ impl pallet_session::historical::Config for Test {
 	type FullIdentificationOf = pallet_staking::ExposureOf<Self>;
 }
 
-impl CurrentSessionIndex for Test {
-	fn current_session_index() -> SessionIndex {
-		<pallet_session::Pallet<Test>>::current_index()
-	}
-}
-
 impl pallet_authorship::Config for Test {
 	type FindAuthor = ();
 	type EventHandler = ();
