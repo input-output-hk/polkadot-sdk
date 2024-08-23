@@ -383,7 +383,6 @@ members = [
 	"substrate/frame/paged-list",
 	"substrate/frame/paged-list/fuzzer",
 	"substrate/frame/parameters",
-	"substrate/frame/partner-chains-session",
 	"substrate/frame/preimage",
 	"substrate/frame/proxy",
 	"substrate/frame/ranked-collective",
@@ -471,7 +470,6 @@ members = [
 	"substrate/primitives/npos-elections/fuzzer",
 	"substrate/primitives/offchain",
 	"substrate/primitives/panic-handler",
-	"substrate/primitives/partner-chains-session",
 	"substrate/primitives/rpc",
 	"substrate/primitives/runtime",
 	"substrate/primitives/runtime-interface",
@@ -935,7 +933,6 @@ pallet-offences-benchmarking = { path = "substrate/frame/offences/benchmarking",
 pallet-paged-list = { path = "substrate/frame/paged-list", default-features = false, version = "0.15.0" }
 pallet-parachain-template = { path = "templates/parachain/pallets/template", default-features = false, version = "0.1.0" }
 pallet-parameters = { path = "substrate/frame/parameters", default-features = false, version = "0.8.0" }
-pallet-partner-chains-session = { path = "substrate/frame/partner-chains-session", default-features = false }
 pallet-preimage = { path = "substrate/frame/preimage", default-features = false, version = "37.0.0" }
 pallet-proxy = { path = "substrate/frame/proxy", default-features = false, version = "37.0.0" }
 pallet-ranked-collective = { path = "substrate/frame/ranked-collective", default-features = false, version = "37.0.0" }
@@ -1233,7 +1230,6 @@ sp-mmr-primitives = { path = "substrate/primitives/merkle-mountain-range", defau
 sp-npos-elections = { path = "substrate/primitives/npos-elections", default-features = false, version = "34.0.0" }
 sp-offchain = { path = "substrate/primitives/offchain", default-features = false, version = "34.0.0" }
 sp-panic-handler = { path = "substrate/primitives/panic-handler", default-features = false, version = "13.0.0" }
-sp-partner-chains-session = { path = "substrate/primitives/partner-chains-session", default-features = false }
 sp-rpc = { path = "substrate/primitives/rpc", default-features = false, version = "32.0.0" }
 sp-runtime = { path = "substrate/primitives/runtime", default-features = false, version = "39.0.0" }
 sp-runtime-interface = { path = "substrate/primitives/runtime-interface", default-features = false, version = "28.0.0" }

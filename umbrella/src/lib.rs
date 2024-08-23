@@ -1393,9 +1393,6 @@ pub use sp_offchain;
 #[cfg(feature = "sp-panic-handler")]
 pub use sp_panic_handler;
 
-#[cfg(feature = "sp-partner-chains-session")]
-pub use sp_partner_chains_session;
-
 /// Substrate RPC primitives and utilities.
 #[cfg(feature = "sp-rpc")]
 pub use sp_rpc;
