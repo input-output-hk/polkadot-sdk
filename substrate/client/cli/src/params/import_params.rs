@@ -82,9 +82,8 @@ pub struct ImportParams {
 	pub trie_cache_size: usize,
 
 	/// DEPRECATED: switch to `--trie-cache-size`.
-	// 'pub' modifier added for request of Midnight, one of Partner Chains early adopters.
 	#[arg(long)]
-	pub state_cache_size: Option<usize>,
+	state_cache_size: Option<usize>,
 }
 
 impl ImportParams {

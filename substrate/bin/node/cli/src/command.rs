@@ -91,12 +91,12 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::Inspect(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 
-			runner.sync_run(|config| async move { cmd.run::<Block, RuntimeApi>(config) })
+			runner.sync_run(|config| cmd.run::<Block, RuntimeApi>(config))
 		},
 		Some(Subcommand::Benchmark(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 
-			runner.sync_run(|config| async move  {
+			runner.sync_run(|config| {
 				// This switch needs to be in the client, since the client decides
 				// which sub-commands it wants to support.
 				match cmd {
@@ -174,11 +174,11 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::Vanity(cmd)) => cmd.run(),
 		Some(Subcommand::BuildSpec(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			runner.sync_run(|config| async move { cmd.run(config.chain_spec, config.network) })
+			runner.sync_run(|config| cmd.run(config.chain_spec, config.network))
 		},
 		Some(Subcommand::CheckBlock(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			runner.async_run(|config| async move {
+			runner.async_run(|config| {
 				let PartialComponents { client, task_manager, import_queue, .. } =
 					new_partial(&config, None)?;
 				Ok((cmd.run(client, import_queue), task_manager))
@@ -186,21 +186,21 @@ pub fn run() -> Result<()> {
 		},
 		Some(Subcommand::ExportBlocks(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			runner.async_run(|config| async move {
+			runner.async_run(|config| {
 				let PartialComponents { client, task_manager, .. } = new_partial(&config, None)?;
 				Ok((cmd.run(client, config.database), task_manager))
 			})
 		},
 		Some(Subcommand::ExportState(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			runner.async_run(|config| async move {
+			runner.async_run(|config| {
 				let PartialComponents { client, task_manager, .. } = new_partial(&config, None)?;
 				Ok((cmd.run(client, config.chain_spec), task_manager))
 			})
 		},
 		Some(Subcommand::ImportBlocks(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			runner.async_run(|config| async move {
+			runner.async_run(|config| {
 				let PartialComponents { client, task_manager, import_queue, .. } =
 					new_partial(&config, None)?;
 				Ok((cmd.run(client, import_queue), task_manager))
@@ -208,11 +208,11 @@ pub fn run() -> Result<()> {
 		},
 		Some(Subcommand::PurgeChain(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			runner.sync_run(|config| async move { cmd.run(config.database) })
+			runner.sync_run(|config| cmd.run(config.database))
 		},
 		Some(Subcommand::Revert(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			runner.async_run(|config| async move {
+			runner.async_run(|config| {
 				let PartialComponents { client, task_manager, backend, .. } =
 					new_partial(&config, None)?;
 				let aux_revert = Box::new(|client: Arc<FullClient>, backend, blocks| {
@@ -225,7 +225,7 @@ pub fn run() -> Result<()> {
 		},
 		Some(Subcommand::ChainInfo(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			runner.sync_run(|config| async move { cmd.run::<Block>(&config) })
+			runner.sync_run(|config| cmd.run::<Block>(&config))
 		},
 	}
 }
