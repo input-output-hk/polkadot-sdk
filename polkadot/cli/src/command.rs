@@ -309,7 +309,7 @@ pub fn run() -> Result<()> {
 		),
 		Some(Subcommand::BuildSpec(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			Ok(runner.sync_run(|config| cmd.run(config.chain_spec, config.network))?)
+			Ok(runner.sync_run(|config| async move { cmd.run(config.chain_spec, config.network) })?)
 		},
 		Some(Subcommand::CheckBlock(cmd)) => {
 			let runner = cli.create_runner(cmd).map_err(Error::SubstrateCli)?;
@@ -317,7 +317,7 @@ pub fn run() -> Result<()> {
 
 			set_default_ss58_version(chain_spec);
 
-			runner.async_run(|mut config| {
+			runner.async_run(|mut config| async move {
 				let (client, _, import_queue, task_manager) =
 					polkadot_service::new_chain_ops(&mut config, None)?;
 				Ok((cmd.run(client, import_queue).map_err(Error::SubstrateCli), task_manager))
@@ -329,7 +329,7 @@ pub fn run() -> Result<()> {
 
 			set_default_ss58_version(chain_spec);
 
-			Ok(runner.async_run(|mut config| {
+			Ok(runner.async_run(|mut config| async move {
 				let (client, _, _, task_manager) =
 					polkadot_service::new_chain_ops(&mut config, None)
 						.map_err(Error::PolkadotService)?;
@@ -342,7 +342,7 @@ pub fn run() -> Result<()> {
 
 			set_default_ss58_version(chain_spec);
 
-			Ok(runner.async_run(|mut config| {
+			Ok(runner.async_run(|mut config| async move {
 				let (client, _, _, task_manager) =
 					polkadot_service::new_chain_ops(&mut config, None)?;
 				Ok((cmd.run(client, config.chain_spec).map_err(Error::SubstrateCli), task_manager))
@@ -354,7 +354,7 @@ pub fn run() -> Result<()> {
 
 			set_default_ss58_version(chain_spec);
 
-			Ok(runner.async_run(|mut config| {
+			Ok(runner.async_run(|mut config| async move {
 				let (client, _, import_queue, task_manager) =
 					polkadot_service::new_chain_ops(&mut config, None)?;
 				Ok((cmd.run(client, import_queue).map_err(Error::SubstrateCli), task_manager))
@@ -362,7 +362,7 @@ pub fn run() -> Result<()> {
 		},
 		Some(Subcommand::PurgeChain(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			Ok(runner.sync_run(|config| cmd.run(config.database))?)
+			Ok(runner.sync_run(|config| async move { cmd.run(config.database) })?)
 		},
 		Some(Subcommand::Revert(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
@@ -370,7 +370,7 @@ pub fn run() -> Result<()> {
 
 			set_default_ss58_version(chain_spec);
 
-			Ok(runner.async_run(|mut config| {
+			Ok(runner.async_run(|mut config| async move {
 				let (client, backend, _, task_manager) =
 					polkadot_service::new_chain_ops(&mut config, None)?;
 				let aux_revert = Box::new(|client, backend, blocks| {
@@ -404,7 +404,7 @@ pub fn run() -> Result<()> {
 					)
 					.into()),
 				#[cfg(feature = "runtime-benchmarks")]
-				BenchmarkCmd::Storage(cmd) => runner.sync_run(|mut config| {
+				BenchmarkCmd::Storage(cmd) => runner.sync_run(|mut config| async move {
 					let (client, backend, _, _) =
 						polkadot_service::new_chain_ops(&mut config, None)?;
 					let db = backend.expose_db();
@@ -412,14 +412,14 @@ pub fn run() -> Result<()> {
 
 					cmd.run(config, client.clone(), db, storage).map_err(Error::SubstrateCli)
 				}),
-				BenchmarkCmd::Block(cmd) => runner.sync_run(|mut config| {
+				BenchmarkCmd::Block(cmd) => runner.sync_run(|mut config| async move {
 					let (client, _, _, _) = polkadot_service::new_chain_ops(&mut config, None)?;
 
 					cmd.run(client.clone()).map_err(Error::SubstrateCli)
 				}),
 				// These commands are very similar and can be handled in nearly the same way.
 				BenchmarkCmd::Extrinsic(_) | BenchmarkCmd::Overhead(_) =>
-					runner.sync_run(|mut config| {
+					runner.sync_run(|mut config| async move {
 						let (client, _, _, _) = polkadot_service::new_chain_ops(&mut config, None)?;
 						let header = client.header(client.info().genesis_hash).unwrap().unwrap();
 						let inherent_data = benchmark_inherent_data(header)
@@ -459,7 +459,7 @@ pub fn run() -> Result<()> {
 					set_default_ss58_version(chain_spec);
 
 					if cfg!(feature = "runtime-benchmarks") {
-						runner.sync_run(|config| {
+						runner.sync_run(|config| async move {
 							cmd.run_with_spec::<sp_runtime::traits::HashingFor<polkadot_service::Block>, ()>(
 								Some(config.chain_spec),
 							)
@@ -474,7 +474,7 @@ pub fn run() -> Result<()> {
 						.into())
 					}
 				},
-				BenchmarkCmd::Machine(cmd) => runner.sync_run(|config| {
+				BenchmarkCmd::Machine(cmd) => runner.sync_run(|config| async move {
 					cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone())
 						.map_err(Error::SubstrateCli)
 				}),
@@ -487,7 +487,7 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::Key(cmd)) => Ok(cmd.run(&cli)?),
 		Some(Subcommand::ChainInfo(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			Ok(runner.sync_run(|config| cmd.run::<polkadot_service::Block>(&config))?)
+			Ok(runner.sync_run(|config| async move { cmd.run::<polkadot_service::Block>(&config) })?)
 		},
 	}?;
 
