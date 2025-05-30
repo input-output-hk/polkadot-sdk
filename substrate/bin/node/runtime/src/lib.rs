@@ -2900,6 +2900,7 @@ impl pallet_beefy::Config for Runtime {
 	type MaxSetIdSessionEntries = BeefySetIdSessionEntries;
 	type OnNewValidatorSet = MmrLeaf;
 	type AncestryHelper = MmrLeaf;
+	type Hashing = Keccak256;
 	type WeightInfo = ();
 	type KeyOwnerProof = sp_session::MembershipProof;
 	type EquivocationReportSystem =
